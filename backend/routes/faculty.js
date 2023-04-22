@@ -1,0 +1,166 @@
+const express = require('express')
+const bcrypt = require('bcryptjs')
+const asyncHandler = require('express-async-handler')
+
+const Faculty = require('../models/Faculty')
+const { generateToken } = require('../utils/generalUtils')
+const { protectFaculty, protectAdmin } = require('../middleware/authMiddleware')
+
+const router = express.Router()
+
+// Register
+router.post(
+    '/register',
+
+    protectAdmin,
+
+    asyncHandler(async (req, res) => {
+
+        const { username, password, universityEmail, department, fullName, personalEmail, phone, address, other } = req.body
+
+        if (!username || !password || !universityEmail || !department || !fullName || !personalEmail || !phone || !address) {
+            res.status(400)
+            throw new Error('Incomplete information')
+        }
+
+        const facultyExists = await Faculty.findOne({ username })
+
+        if (facultyExists) {
+            res.status(400)
+            throw new Error('Faculty already exists')
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(password, salt)
+
+        const faculty = await Faculty.create({
+            username,
+            password: hashedPassword,
+
+            universityEmail,
+            department,
+
+            fullName,
+            personalEmail,
+            phone,
+            address,
+            other: typeof(other) === 'object' ? other : {}
+        })
+
+        if (faculty) {
+            res.status(201).json({
+                token: generateToken({
+                    id: faculty.id,
+                    username: faculty.username
+                })
+            })
+        } else {
+            res.status(400)
+            throw new Error('Invalid faculty data')
+        }
+        
+    })
+)
+
+// Login
+router.post(
+    '/login',
+
+    asyncHandler(async (req, res) => {
+
+        const { username, password } = req.body
+        const faculty = await Faculty.findOne({ username })
+
+        if (!faculty) {
+            res.status(400)
+            throw new Error('Faculty does not exist')
+        }
+        
+        const id = faculty.id
+
+        const passwordValidated = await bcrypt.compare(password, faculty.password)
+        if (!passwordValidated) {
+            res.status(401)
+            throw new Error('Incorrect password')
+        }
+
+        res.status(200).json({
+            token: generateToken({
+                id,
+                username
+            })
+        })
+        
+    })
+)
+
+// Delete Faculty
+router.delete(
+    '/delete',
+
+    protectAdmin,
+
+    asyncHandler(async (req, res) => {
+
+        const { id } = req.body
+
+        if (!id) {
+            res.status(400)
+            throw new Error('No user ID provided to delete')
+        }
+
+        await Faculty.findByIdAndDelete(id)
+        
+    })
+)
+
+// Get Info
+router.get(
+    '/me',
+
+    protectFaculty,
+
+    asyncHandler(async (req, res) => {
+        
+        res.status(200).json(req.user)
+
+    })
+)
+
+// Get complete Info
+router.get(
+    '/info',
+
+    protectAdmin,
+
+    asyncHandler(async (req, res) => {
+
+        const faculty = await Faculty.findById(req.user.id)
+
+        if (!faculty) {
+            res.status(400)
+            throw new Error('User with ID does not exist')
+        }
+
+        res.status(200).json(faculty)
+
+    })
+)
+
+// Get all
+router.get(
+    '/all',
+
+    protectAdmin,
+
+    asyncHandler(async (req, res) => {
+
+        const teachers = await Faculty.find({})
+
+        res.status(200).json(teachers)
+        
+    })
+)
+
+module.exports = router
