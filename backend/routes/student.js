@@ -99,7 +99,7 @@ router.post(
 )
 
 // Delete Student
-router.post(
+router.delete(
     '/delete',
 
     protectAdmin,
