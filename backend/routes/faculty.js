@@ -49,6 +49,7 @@ router.post(
         })
 
         if (faculty) {
+            logger.info(`Faculty registered { id: ${faculty.id}, username: ${faculty.username} }`)
             res.status(201).json({
                 token: generateToken({
                     id: faculty.id,
@@ -85,6 +86,8 @@ router.post(
             throw new Error('Incorrect password')
         }
 
+        logger.info(`User logged in as Faculty { id: ${faculty.id}, username: ${faculty.username} }`)
+
         res.status(200).json({
             token: generateToken({
                 id,
@@ -111,6 +114,10 @@ router.delete(
         }
 
         await Faculty.findByIdAndDelete(id)
+
+        logger.info(`Faculty deleted { id: ${id} }`)
+
+        res.status(200).send()
         
     })
 )

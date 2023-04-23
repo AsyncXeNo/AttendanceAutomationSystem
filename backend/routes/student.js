@@ -5,6 +5,7 @@ const asyncHandler = require('express-async-handler')
 const Student = require('../models/Student')
 const { generateToken } = require('../utils/generalUtils')
 const { protectStudent, protectAdmin, protectFaculty } = require('../middleware/authMiddleware')
+const logger = require('../utils/logger')
 
 const router = express.Router()
 
@@ -53,6 +54,7 @@ router.post(
         })
 
         if (student) {
+            logger.info(`Student registered { id: ${student.id}, username: ${student.username} }`)
             res.status(201).json({
                 token: generateToken({
                     id: student.id,
@@ -88,6 +90,8 @@ router.post(
             throw new Error('Incorrect password')
         }
 
+        logger.info(`User logged in as student { id: ${student.id}, username: ${student.username} }`)
+
         res.status(200).json({
             token: generateToken({
                 id,
@@ -114,6 +118,10 @@ router.delete(
         }
 
         await Student.findByIdAndDelete(id)
+
+        logger.info(`Student deleted { id: ${id} }`)
+
+        res.status(200).send()
         
     })
 )
@@ -139,6 +147,10 @@ router.put(
                 { $inc: { classesConducted: 1, classesAttended: attendanceInfo[id] ? 1 : 0 } }
             )
         })
+
+        logger.info(`Student attendance updated`)
+
+        res.status(200).send()
         
     })
 )

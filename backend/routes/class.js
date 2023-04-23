@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler')
 
 const Class = require('../models/Class')
 const { protectAdmin, protectFaculty } = require('../middleware/authMiddleware')
+const logger = require('../utils/logger')
 
 const router = express.Router()
 
@@ -32,6 +33,8 @@ router.post(
             throw new Error('Incorrect information')
         }
 
+        logger.info(`Class registered { name: ${name}, classTeacher: ${classTeacher} }`)
+
         res.status(201).json(newClass)
         
     })
@@ -53,6 +56,10 @@ router.delete(
         }
 
         await Class.findByIdAndDelete(id)
+
+        logger.info(`Class deleted { id: ${id} }`)
+
+        res.status(200).send()
 
     })
 )

@@ -4,7 +4,7 @@ const asyncHandler = require('express-async-handler')
 
 const Admin = require('../models/Admin')
 const { generateToken } = require('../utils/generalUtils')
-const { protectAdmin } = require('../middleware/authMiddleware')
+const logger = require('../utils/logger')
 
 const router = express.Router()
 
@@ -29,6 +29,8 @@ router.post(
             res.status(401)
             throw new Error('Incorrect Credentials')
         }
+
+        logger.info(`User logged in as Admin { id: ${id}, username: ${username} }`)
 
         res.status(200).json({
             token: generateToken({

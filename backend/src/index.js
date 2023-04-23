@@ -11,6 +11,7 @@ const { getSecret } = require('./secrets')
 const userRoutes = require('../routes/users')
 const classRoutes = require('../routes/class')
 const { errorHandler } = require('../middleware/errorMiddleware')
+const { logRequests } = require('../middleware/logMiddleware')
 
 // Connecting to MongoDB
 mongoose.Promise = global.Promise;
@@ -32,6 +33,7 @@ const port = getSecret('PORT')
 app.use(cors())
 app.use(bodyParser.json())
 app.use(cookieParser())
+app.use(logRequests)
 
 // Routes
 app.use('/users', userRoutes)
